@@ -2,7 +2,7 @@ import { TBoardCoordinates, plane } from "../../util/plane";
 import { creepsStore } from "../characters/creepsStore";
 import { getCellElement } from "../components/Board/util";
 import { TAppContext } from "../main/App";
-import { makeStages } from "./makeWorker";
+import { makePaths } from "./makePaths";
 
 class StageProps {
   batches: number[][] = [];
@@ -32,6 +32,11 @@ class StageProps {
   }
 
   // Getter y Setter para "startPoints"
+  addStartPoint(startPoint: TBoardCoordinates) {
+    this.startPoints.push(startPoint);
+
+    return this;
+  }
   getStartPoints(): TBoardCoordinates[] {
     return this.startPoints;
   }
@@ -40,7 +45,11 @@ class StageProps {
     return this;
   }
 
-  // Getter y Setter para "endPoints"
+  addEndpoint(endPoint: TBoardCoordinates) {
+    this.endPoints.push(endPoint);
+
+    return this;
+  }
   getEndPoints(): TBoardCoordinates[] {
     return this.endPoints;
   }
@@ -72,7 +81,7 @@ export class Stage extends StageProps {
   paths: Record<number, Record<number, TBoardCoordinates[]>> = {};
 
   async start(context: TAppContext) {
-    this.paths = await makeStages(context, this.startPoints, this.endPoints);
+    this.paths = await makePaths(context, this.startPoints, this.endPoints);
     for await (let batch of this.batches) {
       await (async () => {
         return new Promise<void>((resolveBatch) => {

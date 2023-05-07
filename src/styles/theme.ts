@@ -26,4 +26,11 @@ export const theme: Theme = {
   },
   layout,
   sizes,
+  styles: {
+    root: {
+      button: {
+        cursor: "pointer",
+      },
+    },
+  },
 };

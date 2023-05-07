@@ -17,15 +17,13 @@ export const board: ThemeUICSSObject = {
     },
   },
 
-  ".path": {
+  ".startPoint": {
     backgroundColor: "orange",
   },
-  ".destination": {
+  ".endPoint": {
     backgroundColor: "green",
   },
-  ".origin": {
-    backgroundColor: "red",
+  ".wallLine": {
+    backgroundColor: "#333",
   },
-
-  ".wall": { backgroundColor: "#333" },
 };

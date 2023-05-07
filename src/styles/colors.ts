@@ -14,6 +14,8 @@ export const colors = {
   creepLifebarBorder: "black",
   creepLifebarBackgroundFilled: "red",
 
+  toolbarButtonSelected: "#52548f",
+
   primary: "#07c",
   text: "#000",
 };

@@ -1,7 +1,7 @@
 import { TBoardCoordinates, TCoordinates } from "../../util/plane";
 import { TAppContext } from "../main/App";
 
-export function makeStages(
+export function makePaths(
   context: TAppContext,
   startPoints: TCoordinates[],
   endPoints: TCoordinates[]
