@@ -16,4 +16,14 @@ export const board: ThemeUICSSObject = {
       cursor: "pointer",
     },
   },
+
+  ".path": {
+    backgroundColor: "orange",
+  },
+  ".destination": {
+    backgroundColor: "green",
+  },
+  ".origin": {
+    backgroundColor: "red",
+  },
 };

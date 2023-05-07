@@ -2,6 +2,11 @@ export type TCoordinates = {
   x: number;
   y: number;
 };
+let lastAnimation = 0;
+function getAnimationId() {
+  if (lastAnimation > 1000000) lastAnimation = 0;
+  return String(lastAnimation++);
+}
 
 /**
  * Permite acceder a diversas funciones relacionadas a la ubicación
@@ -12,42 +17,62 @@ export const plane = new (class Plane {
     return el.getBoundingClientRect();
   }
 
-  distance(a: TCoordinates, b: TCoordinates) {
-    const d = { x: a.x - b.x, y: a.y - b.y };
-    return { length: Math.sqrt(d.x * d.x + d.y * d.y), ...d };
-  }
-
-  getPosition(element: HTMLElement) {
+  coordinates(element: HTMLElement) {
     const bound = this.bound(element);
 
     return { x: bound.left + bound.width / 2, y: bound.top + bound.height / 2 };
+  }
+
+  distance(a: TCoordinates, b: TCoordinates) {
+    const d = { x: a.x - b.x, y: a.y - b.y };
+    return { length: Math.sqrt(d.x * d.x + d.y * d.y), ...d };
   }
 
   move(
     element: HTMLElement,
     destination: TCoordinates,
     movementSpeed: number,
-    lastTimestamp?: number
+    lastTimestamp?: number,
+    animationId?: string
   ) {
-    if (lastTimestamp === undefined) this.move(element, destination, movementSpeed, Date.now());
-    else
+    return new Promise<boolean>((resolve) => {
+      if (animationId === undefined) {
+        animationId = getAnimationId();
+        element.dataset.animationId = animationId;
+      }
+
+      if (element.dataset.animationId !== animationId) {
+        resolve(false);
+        return;
+      }
+
       requestAnimationFrame((time) => {
-        const diff = time - lastTimestamp;
-        const moveDistance = (diff / 1000) * movementSpeed;
+        (async () => {
+          if (!lastTimestamp) {
+            const result = this.move(element, destination, movementSpeed, time, animationId);
+            resolve(result);
+            return;
+          }
+          const diff = time - lastTimestamp;
+          const moveDistance = (diff / 1000) * movementSpeed;
 
-        const position = this.getPosition(element);
-        const distance = this.distance(position, destination);
+          const position = this.coordinates(element);
+          const distance = this.distance(position, destination);
 
-        if (moveDistance <= distance.length) {
-          this.setPosition(element, destination);
-        } else {
-          const x = (moveDistance / (distance.x + distance.y)) * distance.x;
-          const y = (moveDistance / (distance.x + distance.y)) * distance.y;
+          if (moveDistance >= distance.length) {
+            this.setPosition(element, destination);
+            resolve(true);
+          } else {
+            const mx = (moveDistance / (Math.abs(distance.x) + Math.abs(distance.y))) * distance.x;
+            const my = (moveDistance / (Math.abs(distance.x) + Math.abs(distance.y))) * distance.y;
 
-          this.setPosition(element, { x, y });
-          this.move(element, destination, movementSpeed, time);
-        }
+            this.setPosition(element, { x: position.x - mx, y: position.y - my });
+            const result = await this.move(element, destination, movementSpeed, time, animationId);
+            resolve(result);
+          }
+        })();
       });
+    });
   }
 
   setPosition(element: HTMLElement, position: TCoordinates) {

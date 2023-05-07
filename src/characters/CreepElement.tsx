@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Box } from "theme-ui";
 import { getIndex } from "../../util/getIndex";
 import { Creep } from "./creepsStore/creep";
-import { AppContext } from "../App";
+import { AppContext } from "../main/App";
 
 export const CreepElement = ({ creep }: { creep: Creep }) => {
   const context = useContext(AppContext);
