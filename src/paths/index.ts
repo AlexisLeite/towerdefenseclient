@@ -1,179 +1,142 @@
-import { TCoordinates } from "../../util/plane";
+import { TBoardCoordinates } from "../../util/plane";
 
-export type TNode = {
-  x: number;
-  y: number;
-  f: number;
+class AStarNode {
+  coord: TBoardCoordinates;
+  parent: AStarNode | null;
   g: number;
   h: number;
-  neighbors: TNode[];
-  previous: TNode | null;
-  wall: boolean;
-};
 
-function cloneNodeWithoutNeighbors(node: TNode): TNode {
-  return {
-    x: node.x,
-    y: node.y,
-    f: node.f,
-    g: node.g,
-    h: node.h,
-    neighbors: [], // Los vecinos se actualizarán más adelante
-    previous: null,
-    wall: node.wall,
-  };
-}
-
-function cloneGrid(grid: TNode[][]): TNode[][] {
-  // Clona todos los nodos sin referencias a los vecinos
-  const clonedGrid = grid.map((row) => row.map((node) => cloneNodeWithoutNeighbors(node)));
-
-  // Añade las referencias a los vecinos en la cuadrícula clonada
-  for (let x = 0; x < clonedGrid.length; x++) {
-    for (let y = 0; y < clonedGrid[0].length; y++) {
-      const node = clonedGrid[x][y];
-      if (x > 0) node.neighbors.push(clonedGrid[x - 1][y]);
-      if (x < clonedGrid.length - 1) node.neighbors.push(clonedGrid[x + 1][y]);
-      if (y > 0) node.neighbors.push(clonedGrid[x][y - 1]);
-      if (y < clonedGrid[0].length - 1) node.neighbors.push(clonedGrid[x][y + 1]);
-    }
+  constructor(coord: TBoardCoordinates, parent: AStarNode | null, g: number, h: number) {
+    this.coord = coord;
+    this.parent = parent;
+    this.g = g;
+    this.h = h;
   }
 
-  return clonedGrid;
+  get f(): number {
+    return this.g + this.h;
+  }
 }
 
 export class Paths {
-  private grid: TNode[][];
+  private boardSize: number;
+  private board: boolean[][];
 
-  constructor(width: number, height: number) {
-    this.grid = Array.from({ length: width }, (_, x) =>
-      Array.from({ length: height }, (_, y) => this.createNode(x, y))
-    );
+  constructor(boardSize: number) {
+    this.boardSize = boardSize;
+    this.board = new Array(boardSize).fill(null).map(() => new Array(boardSize).fill(false));
+  }
 
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        this.addNeighbors(this.grid[x][y], this.grid);
-      }
+  markNodeAsWall(coordinates: TBoardCoordinates) {
+    if (this.isValidCoordinate(coordinates)) {
+      this.board[coordinates.x][coordinates.y] = true;
     }
   }
 
-  aStar(start: TNode, end: TNode, grid: TNode[][]): TNode[] {
-    let openSet: TNode[] = [];
-    let closedSet: TNode[] = [];
-    openSet.push(start);
+  findBestPath(a: TBoardCoordinates, b: TBoardCoordinates): TBoardCoordinates[] {
+    if (!this.isValidCoordinate(a) || !this.isValidCoordinate(b)) {
+      return [];
+    }
+
+    const openSet: AStarNode[] = [new AStarNode(a, null, 0, this.distance(a, b))];
+    const closedSet: AStarNode[] = [];
 
     while (openSet.length > 0) {
-      let lowestIndex = 0;
-      for (let i = 0; i < openSet.length; i++) {
-        if (openSet[i].f < openSet[lowestIndex].f) {
-          lowestIndex = i;
-        }
-      }
+      const currentNode = this.getLowestCostNode(openSet);
 
-      const current = openSet[lowestIndex];
+      if (currentNode.coord.x === b.x && currentNode.coord.y === b.y) {
+        const path: TBoardCoordinates[] = [];
+        let current: AStarNode | null = currentNode;
+        let previousDirection: TBoardCoordinates | null = null;
 
-      // Comprueba si el nodo actual es el nodo de destino
-      if (current.x === end.x && current.y === end.y) {
-        let path: TNode[] = [];
-        let temp = current;
-        while (temp.previous) {
-          path.push(temp.previous);
-          temp = temp.previous;
+        while (current !== null) {
+          const next: AStarNode | null = current.parent;
+
+          if (next !== null) {
+            const direction: TBoardCoordinates = {
+              x: next.coord.x - current.coord.x,
+              y: next.coord.y - current.coord.y,
+            };
+
+            if (
+              previousDirection === null ||
+              direction.x !== previousDirection.x ||
+              direction.y !== previousDirection.y
+            ) {
+              path.unshift(current.coord);
+            }
+
+            previousDirection = direction;
+          } else {
+            // Incluye el punto de inicio (a) en el camino
+            path.unshift(current.coord);
+          }
+
+          current = next;
         }
+
         return path;
       }
 
-      openSet = openSet.filter((el) => el !== current);
-      closedSet.push(current);
+      openSet.splice(openSet.indexOf(currentNode), 1);
+      closedSet.push(currentNode);
 
-      const neighbors = current.neighbors;
-      for (let i = 0; i < neighbors.length; i++) {
-        const neighbor = neighbors[i];
-
-        if (!closedSet.includes(neighbor) && !neighbor.wall) {
-          const tempG = current.g + 1;
-
-          if (openSet.includes(neighbor)) {
-            if (tempG < neighbor.g) {
-              neighbor.g = tempG;
-            }
-          } else {
-            neighbor.g = tempG;
-            openSet.push(neighbor);
+      for (let x = -1; x <= 1; x++) {
+        for (let y = -1; y <= 1; y++) {
+          if (x === 0 && y === 0) {
+            continue;
           }
 
-          neighbor.h = this.heuristic(neighbor, end);
-          neighbor.f = neighbor.g + neighbor.h;
-          neighbor.previous = current;
+          const nextCoord: TBoardCoordinates = {
+            x: currentNode.coord.x + x,
+            y: currentNode.coord.y + y,
+          };
+
+          if (!this.isValidCoordinate(nextCoord) || this.board[nextCoord.x][nextCoord.y]) {
+            continue;
+          }
+
+          const g = currentNode.g + this.distance(currentNode.coord, nextCoord);
+          const h = this.distance(nextCoord, b);
+
+          const existingNodeInOpenSet = openSet.find((node) =>
+            this.coordinatesEqual(node.coord, nextCoord)
+          );
+          const existingNodeInClosedSet = closedSet.find((node) =>
+            this.coordinatesEqual(node.coord, nextCoord)
+          );
+          if (existingNodeInOpenSet && g < existingNodeInOpenSet.g) {
+            existingNodeInOpenSet.parent = currentNode;
+            existingNodeInOpenSet.g = g;
+          } else if (existingNodeInClosedSet && g < existingNodeInClosedSet.g) {
+            existingNodeInClosedSet.parent = currentNode;
+            existingNodeInClosedSet.g = g;
+
+            openSet.push(existingNodeInClosedSet);
+            closedSet.splice(closedSet.indexOf(existingNodeInClosedSet), 1);
+          } else if (!existingNodeInOpenSet && !existingNodeInClosedSet) {
+            openSet.push(new AStarNode(nextCoord, currentNode, g, h));
+          }
         }
       }
     }
 
-    return []; //No hay camino disponible
+    return [];
   }
 
-  heuristic(nodeA: TNode, nodeB: TNode): number {
-    return Math.abs(nodeA.x - nodeB.x) + Math.abs(nodeA.y - nodeB.y);
+  private isValidCoordinate(coord: TBoardCoordinates): boolean {
+    return coord.x >= 0 && coord.x < this.boardSize && coord.y >= 0 && coord.y < this.boardSize;
   }
 
-  private createNode(x: number, y: number): TNode {
-    return {
-      x,
-      y,
-      f: 0,
-      g: 0,
-      h: 0,
-      neighbors: [],
-      previous: null,
-      wall: false,
-    };
+  private getLowestCostNode(nodes: AStarNode[]): AStarNode {
+    return nodes.reduce((lowest, node) => (node.f < lowest.f ? node : lowest));
   }
 
-  private addNeighbors(node: TNode, grid: TNode[][]): void {
-    const x = node.x;
-    const y = node.y;
-    if (x < grid.length - 1) {
-      node.neighbors.push(grid[x + 1][y]);
-    }
-    if (x > 0) {
-      node.neighbors.push(grid[x - 1][y]);
-    }
-    if (y < grid[0].length - 1) {
-      node.neighbors.push(grid[x][y + 1]);
-    }
-    if (y > 0) {
-      node.neighbors.push(grid[x][y - 1]);
-    }
+  private distance(a: TBoardCoordinates, b: TBoardCoordinates): number {
+    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
   }
 
-  setNodeAsWall(x: number, y: number): void {
-    if (this.grid[x] && this.grid[x][y]) {
-      this.grid[x][y].wall = true;
-    } else {
-      throw new Error(`Node not found at position: (${x}, ${y})`);
-    }
-  }
-
-  getPathsBetween({ x: x1, y: y1 }: TCoordinates, { x: x2, y: y2 }: TCoordinates): TNode[][] {
-    let start = this.grid[x1][y1];
-    let end = this.grid[x2][y2];
-
-    let paths: TNode[][] = [];
-
-    for (let i = 0; i < 5; i++) {
-      let tempGrid = cloneGrid(this.grid);
-      let newPath = this.aStar(start, end, tempGrid);
-
-      if (newPath.length === 0) {
-        break;
-      }
-
-      paths.push(newPath);
-    }
-
-    // Clasificar los caminos según su longitud
-    paths.sort((a, b) => a.length - b.length);
-
-    return paths;
+  private coordinatesEqual(a: TBoardCoordinates, b: TBoardCoordinates): boolean {
+    return a.x === b.x && a.y === b.y;
   }
 }

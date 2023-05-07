@@ -26,4 +26,6 @@ export const board: ThemeUICSSObject = {
   ".origin": {
     backgroundColor: "red",
   },
+
+  ".wall": { backgroundColor: "#333" },
 };

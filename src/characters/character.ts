@@ -3,12 +3,15 @@ import { TCoordinates } from "../../util/plane";
 import { TCharacterMove } from "./creepsStore";
 
 export type TCharacterEvents = {
+  die: null;
+  mount: null;
   move: TCharacterMove;
   position: TCharacterMove;
 };
 export type TBuff = "ATTACK_IMPROVED" | "DEFENSE_IMPROVED";
 
 export class Character extends EventEmitter<TCharacterEvents> {
+  private _color: string;
   private _currentHp: number;
   private _maxHp: number;
   private _movementSpeed: number;
@@ -16,18 +19,26 @@ export class Character extends EventEmitter<TCharacterEvents> {
   private _size: number;
   private _position: TCoordinates = { x: 0, y: 0 };
 
-  constructor(maxHp: number, movementSpeed: number) {
+  constructor(protected _id: string, maxHp: number, movementSpeed: number, color: string) {
     super();
 
+    this._color = color;
     this._currentHp = maxHp;
     this._maxHp = maxHp;
     this._movementSpeed = movementSpeed;
     this._size = 0.6;
   }
 
+  get id() {
+    return this._id;
+  }
+
   // Setters and getters for currentHp
   set currentHp(value: number) {
     this._currentHp = value;
+    if (value === 0) {
+      this.emit("die", null);
+    }
   }
   get currentHp(): number {
     return this._currentHp;
@@ -57,6 +68,14 @@ export class Character extends EventEmitter<TCharacterEvents> {
     return this._buffs;
   }
 
+  // Setters and getters for buffs
+  set color(value: string) {
+    this._color = value;
+  }
+  get color(): string {
+    return this._color;
+  }
+
   // Setters and getters for position
   set position(value: TCoordinates) {
     this._position = value;
@@ -71,6 +90,12 @@ export class Character extends EventEmitter<TCharacterEvents> {
   }
   get size(): number {
     return this._size;
+  }
+
+  // Chainable setters
+  setColor(value: string): this {
+    this._color = value;
+    return this;
   }
 
   // Chainable setters
@@ -102,5 +127,9 @@ export class Character extends EventEmitter<TCharacterEvents> {
   setSize(value: number): this {
     this.size = value;
     return this;
+  }
+
+  kill() {
+    this.currentHp = 0;
   }
 }

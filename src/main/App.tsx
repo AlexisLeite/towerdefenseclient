@@ -5,18 +5,20 @@ import { Board } from "../components/Board";
 import { CreepsContainer } from "../characters/CreepsContainer";
 import { Compass } from "../components/Compass";
 import { useStartLog } from "../useStartLog";
-import { Creep } from "../characters/creepsStore/creep";
 import { useOnClickCell } from "./hooks/useOnClickCell";
 import { useOnClickContainer } from "./hooks/useOnClickContainer";
 import { usePathsFinder } from "./hooks/usePathsFinder";
 import { Paths } from "../paths";
+import { Stage } from "../stages/Stage";
+import { getCellElement } from "../components/Board/util";
+import { someHorizontalBars } from "./stagesMakersFunctions/someHorizontalBars";
 
 export type TAppContext = { boardSize: number; paths: Paths; unit: number };
 
 export const AppContext = React.createContext<TAppContext>({} as TAppContext);
 
-const boardSize = 50;
-const screenBoardWidth = 500; //px
+const boardSize = 40;
+const screenBoardWidth = 650; //px
 
 const App: React.FC = () => {
   const paths = usePathsFinder(boardSize);

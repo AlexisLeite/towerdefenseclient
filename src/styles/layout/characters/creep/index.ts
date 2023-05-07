@@ -3,6 +3,7 @@ import { ThemeUICSSObject } from "theme-ui";
 export const creep: ThemeUICSSObject = {
   borderRadius: "10000px",
   position: "fixed",
+  transition: "transform",
 
   ".creep__lifeBar": {
     background: "creepLifebarBackground",

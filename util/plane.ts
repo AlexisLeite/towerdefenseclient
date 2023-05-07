@@ -1,7 +1,18 @@
+/**
+ * Coordenadas reales que representa un punto en el plano
+ */
 export type TCoordinates = {
   x: number;
   y: number;
 };
+/**
+ * Coordenadas integrales que representan una celda en el tablero
+ */
+export type TBoardCoordinates = {
+  x: number;
+  y: number;
+};
+
 let lastAnimation = 0;
 function getAnimationId() {
   if (lastAnimation > 1000000) lastAnimation = 0;
@@ -77,9 +88,10 @@ export const plane = new (class Plane {
 
   setPosition(element: HTMLElement, position: TCoordinates) {
     const bound = this.bound(element);
-    Object.assign(element.style, {
-      left: position.x - bound.width / 2 + "px",
-      top: position.y - bound.height / 2 + "px",
-    });
+    element.style.left = "0";
+    element.style.top = "0";
+    element.style.transform = `translate(${position.x - bound.width / 2 + "px"}, ${
+      position.y - bound.height / 2 + "px"
+    }) translateZ(1px)`;
   }
 })();

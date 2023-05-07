@@ -4,7 +4,9 @@ import { Character } from "../character";
 let maxCreep = 0;
 
 export class Creep extends Character {
-  id = `creep${maxCreep++}`;
+  constructor(maxHp: number, movementSpeed: number, color: string) {
+    super(`creep${maxCreep++}`, maxHp, movementSpeed, color);
+  }
 
   element: HTMLElement | null = null;
   el() {
@@ -18,12 +20,13 @@ export class Creep extends Character {
 
   init() {
     plane.setPosition(this.el(), this.position);
+    this.emit("mount", null);
   }
 
   /**
    * Devuelve una promesa indicando si se completó el movimiento
    */
-  move(destination: TCoordinates) {
+  #move(destination: TCoordinates) {
     this.position = destination;
     try {
       const result = plane.move(this.el(), destination, this.movementSpeed);
@@ -33,17 +36,29 @@ export class Creep extends Character {
   }
 
   #isMoving = false;
-  #path: TCoordinates[] = [];
-  async path(destination: TCoordinates) {
-    this.#path.push(destination);
+  async move() {
     if (!this.#isMoving) {
       this.#isMoving = true;
 
       for await (let current of this.#path) {
-        await this.move(current);
+        if (this.currentHp === 0) {
+          this.#path = [];
+          this.#isMoving = false;
+          return false;
+        } else {
+          await this.#move(current);
+        }
       }
 
+      this.#path = [];
       this.#isMoving = false;
     }
+
+    return true;
+  }
+
+  #path: TCoordinates[] = [];
+  async path(destination: TCoordinates) {
+    this.#path.push(destination);
   }
 }

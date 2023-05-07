@@ -1,6 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Box } from "theme-ui";
-import { getIndex } from "../../util/getIndex";
 import { Creep } from "./creepsStore/creep";
 import { AppContext } from "../main/App";
 
@@ -9,7 +8,7 @@ export const CreepElement = ({ creep }: { creep: Creep }) => {
 
   const sx = useMemo(
     () => ({
-      background: getIndex(["red"], [true]),
+      background: creep.color,
       height: context.unit * creep.size + "px",
       width: context.unit * creep.size + "px",
 

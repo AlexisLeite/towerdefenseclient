@@ -1,3 +1,4 @@
+const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 
@@ -44,5 +45,10 @@ module.exports = {
     port: 3000,
     open: true,
     hot: true,
+  },
+  output: {
+    publicPath: "/",
+    filename: "bundle.js",
+    path: path.resolve(__dirname, "public"),
   },
 };

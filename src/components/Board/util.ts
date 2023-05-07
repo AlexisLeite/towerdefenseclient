@@ -1,20 +1,20 @@
-import { TCoordinates, plane } from "../../../util/plane";
+import { TBoardCoordinates, TCoordinates, plane } from "../../../util/plane";
 import { TAppContext } from "../../main/App";
 import { addBoundary } from "./../../../util/addBoundary";
 
 /**
  * Dado el elemento HTML de una celda, devuelve las coordenadas numéricas de la misma.
  */
-export function getCellCoordinates(cell: HTMLElement): TCoordinates {
+export function getCellCoordinates(cell: HTMLElement): TBoardCoordinates {
   const x = Number(cell.dataset.column);
   const y = Number(cell.dataset.row);
 
   return { x, y };
 }
 
-export function getCellElement(coordinates: { column: number; row: number }) {
+export function getCellElement(coordinates: TBoardCoordinates) {
   return document.querySelector<HTMLElement>(
-    `[data-column="${coordinates.column}"][data-row="${coordinates.row}"]`
+    `[data-column="${coordinates.x}"][data-row="${coordinates.y}"]`
   );
 }
 
@@ -24,12 +24,12 @@ export function getClosestCellElement(context: TAppContext, coordinates: TCoordi
   const distance = plane.distance({ x: bound.left, y: bound.top }, coordinates);
 
   const cellCoordinates = {
-    row: addBoundary({
-      num: Math.floor(Math.abs(distance.y) / context.unit),
+    x: addBoundary({
+      num: Math.floor(Math.abs(distance.x) / context.unit),
       max: context.boardSize - 1,
     }),
-    column: addBoundary({
-      num: Math.floor(Math.abs(distance.x) / context.unit),
+    y: addBoundary({
+      num: Math.floor(Math.abs(distance.y) / context.unit),
       max: context.boardSize - 1,
     }),
   };
