@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Creep, TCreep } from "./Creep";
+import { CreepElement } from "./CreepElement";
 import { creepsStore } from "./creepsStore";
+import { Creep } from "./creepsStore/creep";
 
 export const CreepsContainer = () => {
-  const [creeps, setCreeps] = useState<TCreep[]>([]);
+  const [creeps, setCreeps] = useState<Creep[]>([]);
 
   useMemo(() => {
     const unsuscribers = [
@@ -19,7 +20,7 @@ export const CreepsContainer = () => {
   return (
     <>
       {creeps.map((current) => (
-        <Creep key={current.id} {...current} />
+        <CreepElement key={current.id} creep={current} />
       ))}
     </>
   );

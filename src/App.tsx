@@ -4,32 +4,26 @@ import { theme } from "./styles/theme";
 import { Board, TOnClickCell } from "./components/Board";
 import { CreepsContainer } from "./characters/CreepsContainer";
 import { Compass } from "./components/Compass";
+import { creepsStore } from "./characters/creepsStore";
+import { useStartLog } from "./useStartLog";
+import { plane } from "../util/plane";
 
-const Context = React.createContext<{ count: number }>({ count: 0 });
+export type TAppContext = { unit: number };
 
-const C = () => {
-  const { count } = React.useContext(Context);
-
-  return <>Hello {count}</>;
-};
+export const AppContext = React.createContext<TAppContext>({} as TAppContext);
 
 const App: React.FC = () => {
-  const [count, setCount] = React.useState(0);
-
-  const contextValue = { count };
-
-  React.useMemo(() => {
-    console.clear();
-    console.log({ theme });
-  }, []);
+  const appContext: TAppContext = { unit: 50 };
+  useStartLog({ appContext, theme });
 
   return (
     <ThemeProvider theme={theme}>
-      <Context.Provider value={contextValue}>
+      <AppContext.Provider value={appContext}>
         <Box variant="layout.app">
           <Board
             onClickCell={React.useCallback((ev: TOnClickCell) => {
-              console.log(ev);
+              const creep = creepsStore.make(1);
+              creep.setPosition(plane.getPosition(ev.cell));
             }, [])}
             size={10}
             width={500}
@@ -37,7 +31,7 @@ const App: React.FC = () => {
           <Compass />
           <CreepsContainer />
         </Box>
-      </Context.Provider>
+      </AppContext.Provider>
     </ThemeProvider>
   );
 };
